@@ -4,7 +4,7 @@ import uuid
 from typing import Optional
 from fastapi import status, Form, File, UploadFile, Query, Header, Path
 from fastapi.responses import JSONResponse
-from src.schema.inward_schema import ForwardInwardRequest, MarkOffInwardRequest
+from src.schema.inward_schema import ForwardInwardRequest, MarkOffInwardRequest, CreateSoftCopyInwardRequest
 from src.service.inward_service import InwardService
 from src.utils.common_utils import UPLOAD_DIR
 from src.utils.validation_utils import validate_field, ValidationError
@@ -12,72 +12,28 @@ from src.utils.validation_utils import validate_field, ValidationError
 class InwardController:
     @staticmethod
     async def create_soft_copy_inward(
-        department: str = Form(...),
-        division: str = Form(...),
-        sub_section: str = Form(...),
-        case_access_level: str = Form(...),
-        privacy_level: str = Form(...),
-        inward_priority_level: str = Form(...),
-        year: int = Form(...),
-        inward_file: UploadFile = File(...),
-        inward_subject: str = Form(...),
-        inward_type: str = Form(...),
-        from_which_office: str = Form(...),
-        from_which_department: str = Form(...),
-        inward_date: str = Form(...),
-        letter_type: str = Form(...),
-        date_of_receipt: str = Form(...),
-        estimated_date_of_closure: str = Form(...),
-        process_type: str = Form(...),
-        letter_language: str = Form(...),
-        assigned_to: str = Form(...),
-        x_user_id: Optional[str] = Header(None, alias="X-User-Id")
+        body: CreateSoftCopyInwardRequest
     ):
         try:
             # Perform validations
-            validate_field("department", department)
-            validate_field("division", division)
-            validate_field("sub_section", sub_section)
-            validate_field("case_access_level", case_access_level)
-            validate_field("privacy_level", privacy_level)
-            validate_field("inward_priority_level", inward_priority_level)
-            validate_field("office", from_which_office)
-            validate_field("department", from_which_department)
-            validate_field("letter_type", letter_type)
-            validate_field("process_type", process_type)
-            validate_field("letter_language", letter_language)
+            validate_field("department", body.department)
+            validate_field("division", body.division)
+            validate_field("sub_section", body.sub_section)
+            validate_field("case_access_level", body.case_access_level)
+            validate_field("privacy_level", body.privacy_level)
+            validate_field("inward_priority_level", body.inward_priority_level)
+            validate_field("office", body.from_which_office)
+            validate_field("department", body.from_which_department)
+            validate_field("letter_type", body.letter_type)
+            validate_field("process_type", body.process_type)
+            validate_field("letter_language", body.letter_language)
 
-            data = {
-                "department": department,
-                "division": division,
-                "sub_section": sub_section,
-                "case_access_level": case_access_level,
-                "privacy_level": privacy_level,
-                "inward_priority_level": inward_priority_level,
-                "year": year,
-                "inward_subject": inward_subject,
-                "inward_type": inward_type,
-                "from_which_office": from_which_office,
-                "from_which_department": from_which_department,
-                "inward_date": inward_date,
-                "letter_type": letter_type,
-                "date_of_receipt": date_of_receipt,
-                "estimated_date_of_closure": estimated_date_of_closure,
-                "process_type": process_type,
-                "letter_language": letter_language,
-                "assigned_to": assigned_to,
-            }
+            data = body.model_dump()
+
             
-            created_by = x_user_id or "system"
+            created_by = body.user_name or "system"
             
-            file_ext = os.path.splitext(inward_file.filename)[-1] if inward_file.filename else ""
-            unique_filename = f"inward_{uuid.uuid4().hex}{file_ext}"
-            filepath = os.path.join(UPLOAD_DIR, unique_filename)
-            
-            with open(filepath, "wb") as buffer:
-                shutil.copyfileobj(inward_file.file, buffer)
-                
-            inward_id = InwardService.create_soft_copy_inward(data, unique_filename, created_by)
+            inward_id = InwardService.create_soft_copy_inward(data, body.inward_file, created_by)
             
             return JSONResponse(
                 status_code=status.HTTP_201_CREATED,

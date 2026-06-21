@@ -32,14 +32,14 @@ def test_create_soft_copy_inward():
         "estimated_date_of_closure": "2025-12-31",
         "process_type": "RTI",
         "letter_language": "English",
-        "assigned_to": "officer_bob"
+        "assigned_to": "officer_bob",
+        "inward_file": "mock_file.pdf",
+        "user_name": "officer_alice"
     }
     
     response = client.post(
         "/api/v1/create_soft_copy_inward/",
-        data=data,
-        files={"inward_file": ("test_doc.pdf", file, "application/pdf")},
-        headers={"X-User-Id": "officer_alice"}
+        json=data
     )
     
     assert response.status_code == 201
@@ -76,13 +76,13 @@ def test_fetch_inward_single_and_list():
         "estimated_date_of_closure": "2025-06-10",
         "process_type": "RTI",
         "letter_language": "Hindi",
-        "assigned_to": "officer_bob"
+        "assigned_to": "officer_bob",
+        "inward_file": "mock_file.pdf",
+        "user_name": "officer_alice"
     }
     create_resp = client.post(
         "/api/v1/create_soft_copy_inward/",
-        data=data,
-        files={"inward_file": ("doc.txt", file, "text/plain")},
-        headers={"X-User-Id": "officer_alice"}
+        json=data
     )
     inward_id = create_resp.json()["data"]["inward_id"]
     
@@ -131,12 +131,13 @@ def test_forward_inward():
         "from_which_office": "Central Office", "from_which_department": "Department Of Regulation",
         "inward_date": "2025-06-01", "letter_type": "Central Office(Others)", "date_of_receipt": "2025-06-02",
         "estimated_date_of_closure": "2025-06-10", "process_type": "RTI",
-        "letter_language": "Hindi", "assigned_to": "officer_bob"
+        "letter_language": "Hindi", "assigned_to": "officer_bob",
+        "inward_file": "mock_file.pdf",
+        "user_name": "officer_bob"
     }
     create_resp = client.post(
         "/api/v1/create_soft_copy_inward/",
-        data=data,
-        files={"inward_file": ("doc.txt", file, "text/plain")}
+        json=data
     )
     inward_id = create_resp.json()["data"]["inward_id"]
 
@@ -170,12 +171,13 @@ def test_office_note_flow():
         "from_which_office": "Central Office", "from_which_department": "Department Of Regulation",
         "inward_date": "2025-06-01", "letter_type": "Central Office(Others)", "date_of_receipt": "2025-06-02",
         "estimated_date_of_closure": "2025-06-10", "process_type": "RTI",
-        "letter_language": "Hindi", "assigned_to": "officer_bob"
+        "letter_language": "Hindi", "assigned_to": "officer_bob",
+        "inward_file": "mock_file.pdf",
+        "user_name": "officer_bob"
     }
     create_resp = client.post(
         "/api/v1/create_soft_copy_inward/",
-        data=data,
-        files={"inward_file": ("doc.txt", file, "text/plain")}
+        json=data
     )
     inward_id = create_resp.json()["data"]["inward_id"]
 
@@ -240,12 +242,13 @@ def test_create_enclosure():
         "from_which_office": "Central Office", "from_which_department": "Department Of Regulation",
         "inward_date": "2025-06-01", "letter_type": "Central Office(Others)", "date_of_receipt": "2025-06-02",
         "estimated_date_of_closure": "2025-06-10", "process_type": "RTI",
-        "letter_language": "Hindi", "assigned_to": "officer_bob"
+        "letter_language": "Hindi", "assigned_to": "officer_bob",
+        "inward_file": "mock_file.pdf",
+        "user_name": "officer_bob"
     }
     create_resp = client.post(
         "/api/v1/create_soft_copy_inward/",
-        data=data,
-        files={"inward_file": ("doc.txt", file, "text/plain")}
+        json=data
     )
     inward_id = create_resp.json()["data"]["inward_id"]
 
@@ -290,12 +293,13 @@ def test_mark_off_inward():
         "from_which_office": "Central Office", "from_which_department": "Department Of Regulation",
         "inward_date": "2025-06-01", "letter_type": "Central Office(Others)", "date_of_receipt": "2025-06-02",
         "estimated_date_of_closure": "2025-06-10", "process_type": "RTI",
-        "letter_language": "Hindi", "assigned_to": "officer_bob"
+        "letter_language": "Hindi", "assigned_to": "officer_bob",
+        "inward_file": "mock_file.pdf",
+        "user_name": "officer_bob"
     }
     create_resp = client.post(
         "/api/v1/create_soft_copy_inward/",
-        data=data,
-        files={"inward_file": ("doc.txt", file, "text/plain")}
+        json=data
     )
     inward_id = create_resp.json()["data"]["inward_id"]
 
@@ -374,14 +378,14 @@ def test_create_inward_validation_errors():
         "estimated_date_of_closure": "2025-12-31",
         "process_type": "INVALID_PROCESS_VALUE",
         "letter_language": "English",
-        "assigned_to": "officer_bob"
+        "assigned_to": "officer_bob",
+        "inward_file": "mock_file.pdf",
+        "user_name": "officer_alice"
     }
     
     response = client.post(
         "/api/v1/create_soft_copy_inward/",
-        data=data,
-        files={"inward_file": ("test_doc.pdf", file, "application/pdf")},
-        headers={"X-User-Id": "officer_alice"}
+        json=data
     )
     
     assert response.status_code == 400
@@ -396,9 +400,7 @@ def test_create_inward_validation_errors():
     
     response = client.post(
         "/api/v1/create_soft_copy_inward/",
-        data=data,
-        files={"inward_file": ("test_doc.pdf", file, "application/pdf")},
-        headers={"X-User-Id": "officer_alice"}
+        json=data
     )
     
     assert response.status_code == 400
@@ -412,9 +414,7 @@ def test_create_inward_validation_errors():
     
     response = client.post(
         "/api/v1/create_soft_copy_inward/",
-        data=data,
-        files={"inward_file": ("test_doc.pdf", file, "application/pdf")},
-        headers={"X-User-Id": "officer_alice"}
+        json=data
     )
     
     assert response.status_code == 400
