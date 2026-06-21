@@ -1,15 +1,14 @@
 import io
 import pytest
 from fastapi.testclient import TestClient
-from src.main import app, inwards_db, office_notes_db, enclosures_db
+from src.main import app
+from src.db.database import reset_db
 
 client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def clear_db():
-    inwards_db.clear()
-    office_notes_db.clear()
-    enclosures_db.clear()
+    reset_db()
 
 def test_create_soft_copy_inward():
     file_content = b"Mock document content"
@@ -72,7 +71,7 @@ def test_fetch_inward_single_and_list():
         "from_which_office": "Office X",
         "from_which_department": "Dept Y",
         "inward_date": "2025-06-01",
-        "letter_type": "Type Z",
+        "letter_type": "Ltr",
         "date_of_receipt": "2025-06-02",
         "estimated_date_of_closure": "2025-06-10",
         "process_type": "Proc A",
@@ -129,9 +128,9 @@ def test_forward_inward():
         "department": "DBR", "division": "Legis", "sub_section": "Sec 1",
         "case_access_level": "wider", "privacy_level": "public", "inward_priority_level": "medium",
         "year": 2025, "inward_subject": "Subj", "inward_type": "Type",
-        "from_which_office": "Off", "from_which_department": "Dept",
+        "from_which_office": "Office X", "from_which_department": "Legal",
         "inward_date": "2025-06-01", "letter_type": "Ltr", "date_of_receipt": "2025-06-02",
-        "estimated_date_of_closure": "2025-06-10", "process_type": "Proc",
+        "estimated_date_of_closure": "2025-06-10", "process_type": "Proc A",
         "letter_language": "Hindi", "assigned_to": "officer_bob"
     }
     create_resp = client.post(
@@ -168,9 +167,9 @@ def test_office_note_flow():
         "department": "DBR", "division": "Legis", "sub_section": "Sec 1",
         "case_access_level": "wider", "privacy_level": "public", "inward_priority_level": "medium",
         "year": 2025, "inward_subject": "Subj", "inward_type": "Type",
-        "from_which_office": "Off", "from_which_department": "Dept",
+        "from_which_office": "Office X", "from_which_department": "Legal",
         "inward_date": "2025-06-01", "letter_type": "Ltr", "date_of_receipt": "2025-06-02",
-        "estimated_date_of_closure": "2025-06-10", "process_type": "Proc",
+        "estimated_date_of_closure": "2025-06-10", "process_type": "Proc A",
         "letter_language": "Hindi", "assigned_to": "officer_bob"
     }
     create_resp = client.post(
@@ -238,9 +237,9 @@ def test_create_enclosure():
         "department": "DBR", "division": "Legis", "sub_section": "Sec 1",
         "case_access_level": "wider", "privacy_level": "public", "inward_priority_level": "medium",
         "year": 2025, "inward_subject": "Subj", "inward_type": "Type",
-        "from_which_office": "Off", "from_which_department": "Dept",
+        "from_which_office": "Office X", "from_which_department": "Legal",
         "inward_date": "2025-06-01", "letter_type": "Ltr", "date_of_receipt": "2025-06-02",
-        "estimated_date_of_closure": "2025-06-10", "process_type": "Proc",
+        "estimated_date_of_closure": "2025-06-10", "process_type": "Proc A",
         "letter_language": "Hindi", "assigned_to": "officer_bob"
     }
     create_resp = client.post(
@@ -288,9 +287,9 @@ def test_mark_off_inward():
         "department": "DBR", "division": "Legis", "sub_section": "Sec 1",
         "case_access_level": "wider", "privacy_level": "public", "inward_priority_level": "medium",
         "year": 2025, "inward_subject": "Subj", "inward_type": "Type",
-        "from_which_office": "Off", "from_which_department": "Dept",
+        "from_which_office": "Office X", "from_which_department": "Legal",
         "inward_date": "2025-06-01", "letter_type": "Ltr", "date_of_receipt": "2025-06-02",
-        "estimated_date_of_closure": "2025-06-10", "process_type": "Proc",
+        "estimated_date_of_closure": "2025-06-10", "process_type": "Proc A",
         "letter_language": "Hindi", "assigned_to": "officer_bob"
     }
     create_resp = client.post(
@@ -350,3 +349,74 @@ def test_mark_off_inward():
     )
     assert mark_off_again_resp.status_code == 409
     assert mark_off_again_resp.json()["error"] == "INWARD_ALREADY_MARKED_OFF"
+
+
+def test_create_inward_validation_errors():
+    # 1. Try creating with invalid process_type
+    file_content = b"Mock document content"
+    file = io.BytesIO(file_content)
+    
+    data = {
+        "department": "DBR",
+        "division": "Legis",
+        "sub_section": "Section A",
+        "case_access_level": "limited",
+        "privacy_level": "confidential",
+        "inward_priority_level": "high",
+        "year": 2025,
+        "inward_subject": "Draft Banking Bill 2025",
+        "inward_type": "Legislative Ref",
+        "from_which_office": "Central Office",
+        "from_which_department": "Legal",
+        "inward_date": "2025-06-01",
+        "letter_type": "Official letter",
+        "date_of_receipt": "2025-06-02",
+        "estimated_date_of_closure": "2025-12-31",
+        "process_type": "INVALID_PROCESS_VALUE",
+        "letter_language": "English",
+        "assigned_to": "officer_bob"
+    }
+    
+    response = client.post(
+        "/api/v1/create_soft_copy_inward/",
+        data=data,
+        files={"inward_file": ("test_doc.pdf", file, "application/pdf")},
+        headers={"X-User-Id": "officer_alice"}
+    )
+    
+    assert response.status_code == 400
+    resp_json = response.json()
+    assert resp_json["error"] == "INVALID_PROCESS_TYPE"
+    assert "Allowed values" in resp_json["message"]
+
+    # 2. Try creating with invalid letter_language
+    file.seek(0)
+    data["process_type"] = "Standard"
+    data["letter_language"] = "French"
+    
+    response = client.post(
+        "/api/v1/create_soft_copy_inward/",
+        data=data,
+        files={"inward_file": ("test_doc.pdf", file, "application/pdf")},
+        headers={"X-User-Id": "officer_alice"}
+    )
+    
+    assert response.status_code == 400
+    resp_json = response.json()
+    assert resp_json["error"] == "INVALID_LETTER_LANGUAGE"
+
+    # 3. Try creating with invalid office
+    file.seek(0)
+    data["letter_language"] = "English"
+    data["from_which_office"] = "Invalid Office Value"
+    
+    response = client.post(
+        "/api/v1/create_soft_copy_inward/",
+        data=data,
+        files={"inward_file": ("test_doc.pdf", file, "application/pdf")},
+        headers={"X-User-Id": "officer_alice"}
+    )
+    
+    assert response.status_code == 400
+    resp_json = response.json()
+    assert resp_json["error"] == "INVALID_OFFICE"

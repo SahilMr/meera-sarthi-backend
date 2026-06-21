@@ -1,0 +1,51 @@
+{
+  "process_type": [
+    "Gloabal Common Process",
+    "RTI"
+  ],
+  "letter_language": [
+    "English",
+    "Hindi",
+    "Marathi"
+  ],
+  "letter_type": [
+    "Central Office(Others)"
+  ],
+  "office": [
+    "Central Office",
+    "BKC",
+    "Amar"
+  ],
+  "department": [
+    "Department Of Supervision",
+    "Department Of Regulation",
+    "Fintech department",
+    "Department of Currency Management"
+  ],
+  "case_access_level": [
+    "Limited Case Access",
+    "Wider Case Access"
+  ],
+  "privacy_level": [
+    "confidential",
+    "public"
+  ],
+  "inward_priority_level": [
+    "high",
+    "medium",
+    "low"
+  ],
+  "division": [
+    "DOS-1",
+    "DOS-3",
+    "DOS-3",
+    "Policy & Strategy Division",
+    "Policy & Planning Division",
+    "Staff Section 1"
+  ],
+  "sub_section": [
+    "SSM-NBFCs 1",
+    "State Bank of India",
+    "SSM-NBFCs 2"
+  ]
+}

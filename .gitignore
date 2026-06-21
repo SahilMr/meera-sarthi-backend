@@ -128,3 +128,7 @@ venv.bak/
 
 # SAARTHI uploads folder (local mocks)
 uploads/
+
+
+tempvenv/
+uv.lock

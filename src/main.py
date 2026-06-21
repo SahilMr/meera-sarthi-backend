@@ -1,15 +1,23 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse, FileResponse
 from src.router.inward_router import router as inward_router
 from src.router.office_note_router import router as office_note_router
-from src.db.mock_db import inwards_db, office_notes_db, enclosures_db
+from src.db.database import init_db
 from src.utils.common_utils import UPLOAD_DIR
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize the database on startup
+    init_db()
+    yield
 
 app = FastAPI(
     title="SAARTHI Mock API Backend",
     description="A mock API backend for the SAARTHI application implementing core business flows with a clean src/ layout.",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # Root health status route
@@ -35,3 +43,8 @@ async def download_file(filename: str):
             content={"message": "File not found"}
         )
     return FileResponse(filepath)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("src.main:app", host="0.0.0.0", port=8001, reload=True)
+

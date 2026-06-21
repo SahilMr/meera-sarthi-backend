@@ -3,7 +3,7 @@ from fastapi import status, Header, Path
 from fastapi.responses import JSONResponse
 from src.schema.office_note_schema import CreateOfficeNoteRequest, ForwardOfficeNoteRequest
 from src.service.office_note_service import OfficeNoteService
-from src.db.mock_db import inwards_db, office_notes_db
+from src.service.inward_service import InwardService
 
 class OfficeNoteController:
     @staticmethod
@@ -16,7 +16,7 @@ class OfficeNoteController:
             office_note = body.office_note
             created_by = x_user_id or "system"
             
-            if inward_id not in inwards_db:
+            if not InwardService.inward_exists(inward_id):
                 return JSONResponse(
                     status_code=status.HTTP_404_NOT_FOUND,
                     content={
@@ -104,7 +104,7 @@ class OfficeNoteController:
             forward_to = body.forward_to
             acted_by = x_user_id or "system"
             
-            if office_note_id not in office_notes_db:
+            if not OfficeNoteService.office_note_exists(office_note_id):
                 return JSONResponse(
                     status_code=status.HTTP_404_NOT_FOUND,
                     content={

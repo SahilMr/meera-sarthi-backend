@@ -1,62 +1,101 @@
 from datetime import datetime
 from typing import Optional
-from src.db.mock_db import (
-    inwards_db, office_notes_db, get_next_office_note_seq
-)
-from src.utils.common_utils import create_audit_record
+from src.db.database import get_db_connection, get_next_sequence
+from src.service.inward_service import InwardService
 
 class OfficeNoteService:
     @staticmethod
+    def office_note_exists(office_note_id: str) -> bool:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM office_notes WHERE office_note_id = ?;", (office_note_id,))
+        exists = cursor.fetchone() is not None
+        conn.close()
+        return exists
+
+    @staticmethod
     def create_office_note(inward_id: str, office_note_text: str, created_by: str) -> Optional[str]:
-        if inward_id not in inwards_db:
+        if not InwardService.inward_exists(inward_id):
             return None
         
-        seq = get_next_office_note_seq()
+        seq = get_next_sequence("office_note")
         office_note_id = f"ON-{seq:04d}"
         
-        note_record = {
-            "office_note_id": office_note_id,
-            "inward_id": inward_id,
-            "office_note": office_note_text,
-            "created_at": datetime.now().isoformat(),
-            "created_by": created_by,
-            "reviewed_by": None,
-            "comments": None
-        }
+        created_at = datetime.now().isoformat()
         
-        office_notes_db[office_note_id] = note_record
-        
-        # Link to inward and log audit trail on parent inward
-        inwards_db[inward_id]["office_notes"].append(office_note_id)
-        inwards_db[inward_id]["audit_history"].append(
-            create_audit_record("create_office_note", created_by, f"Office note {office_note_id} created")
-        )
-        
-        return office_note_id
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO office_notes (office_note_id, inward_id, office_note, created_at, created_by, reviewed_by, comments)
+                VALUES (?, ?, ?, ?, ?, ?, ?);
+                """,
+                (office_note_id, inward_id, office_note_text, created_at, created_by, None, None)
+            )
+            
+            # Log audit trail on parent inward
+            details = f"Office note {office_note_id} created"
+            cursor.execute(
+                """
+                INSERT INTO audit_logs (inward_id, action, acted_by, acted_at, details)
+                VALUES (?, ?, ?, ?, ?);
+                """,
+                (inward_id, "create_office_note", created_by, created_at, details)
+            )
+            conn.commit()
+            return office_note_id
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
 
     @staticmethod
     def get_office_note_by_id(office_note_id: str) -> Optional[dict]:
-        if office_note_id not in office_notes_db:
-            return None
-        return office_notes_db[office_note_id]
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM office_notes WHERE office_note_id = ?;", (office_note_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return dict(row)
+        finally:
+            conn.close()
 
     @staticmethod
     def forward_office_note(office_note_id: str, forward_to: str, acted_by: str) -> bool:
-        if office_note_id not in office_notes_db:
-            return False
-        
-        note = office_notes_db[office_note_id]
-        inward_id = note["inward_id"]
-        old_reviewer = note["reviewed_by"]
-        note["reviewed_by"] = forward_to
-        
-        # Log to parent inward audit log
-        if inward_id in inwards_db:
-            inwards_db[inward_id]["audit_history"].append(
-                create_audit_record(
-                    "forward_office_note",
-                    acted_by,
-                    f"Office note {office_note_id} routed for review to {forward_to} (previously reviewed by {old_reviewer or 'none'})"
-                )
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT inward_id, reviewed_by FROM office_notes WHERE office_note_id = ?;", (office_note_id,))
+            row = cursor.fetchone()
+            if not row:
+                return False
+            
+            inward_id = row["inward_id"]
+            old_reviewer = row["reviewed_by"]
+            
+            cursor.execute(
+                "UPDATE office_notes SET reviewed_by = ? WHERE office_note_id = ?;",
+                (forward_to, office_note_id)
             )
-        return True
+            
+            # Log to parent inward audit log
+            acted_at = datetime.now().isoformat()
+            details = f"Office note {office_note_id} routed for review to {forward_to} (previously reviewed by {old_reviewer or 'none'})"
+            cursor.execute(
+                """
+                INSERT INTO audit_logs (inward_id, action, acted_by, acted_at, details)
+                VALUES (?, ?, ?, ?, ?);
+                """,
+                (inward_id, "forward_office_note", acted_by, acted_at, details)
+            )
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()

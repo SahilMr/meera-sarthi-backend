@@ -1,12 +1,13 @@
 import os
 import shutil
+import uuid
 from typing import Optional
 from fastapi import status, Form, File, UploadFile, Query, Header, Path
 from fastapi.responses import JSONResponse
 from src.schema.inward_schema import ForwardInwardRequest, MarkOffInwardRequest
 from src.service.inward_service import InwardService
 from src.utils.common_utils import UPLOAD_DIR
-from src.db.mock_db import inwards_db
+from src.utils.validation_utils import validate_field, ValidationError
 
 class InwardController:
     @staticmethod
@@ -33,12 +34,19 @@ class InwardController:
         x_user_id: Optional[str] = Header(None, alias="X-User-Id")
     ):
         try:
-            # We need to save the file
-            # Let's get next index safely to avoid name conflicts.
-            # We can use length of inwards_db or just a temporary unique name.
-            # Let's find sequence by invoking the service.
-            # Actually, to get the file name, we can pass a temp file name or invoke the service first.
-            # Let's pass the form parameters as a dict to service.
+            # Perform validations
+            validate_field("department", department)
+            validate_field("division", division)
+            validate_field("sub_section", sub_section)
+            validate_field("case_access_level", case_access_level)
+            validate_field("privacy_level", privacy_level)
+            validate_field("inward_priority_level", inward_priority_level)
+            validate_field("office", from_which_office)
+            validate_field("department", from_which_department)
+            validate_field("letter_type", letter_type)
+            validate_field("process_type", process_type)
+            validate_field("letter_language", letter_language)
+
             data = {
                 "department": department,
                 "division": division,
@@ -62,13 +70,7 @@ class InwardController:
             
             created_by = x_user_id or "system"
             
-            # Save file to uploads folder temporarily
             file_ext = os.path.splitext(inward_file.filename)[-1] if inward_file.filename else ""
-            # We will use a temp file name or just use index. Since we increment inward_seq in Service, 
-            # let's write to a temp file or get sequence inside service.
-            # Let's invoke create_soft_copy_inward. It needs file name. We will use a unique name.
-            # Let's generate a unique filename:
-            import uuid
             unique_filename = f"inward_{uuid.uuid4().hex}{file_ext}"
             filepath = os.path.join(UPLOAD_DIR, unique_filename)
             
@@ -85,6 +87,15 @@ class InwardController:
                     },
                     "message": "Success",
                     "error": None
+                }
+            )
+        except ValidationError as ve:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={
+                    "data": None,
+                    "message": ve.message,
+                    "error": ve.error_code
                 }
             )
         except Exception as e:
@@ -125,7 +136,6 @@ class InwardController:
                     }
                 )
             
-            # Fetch work queue
             records = InwardService.get_inwards_list(assigned_to, page, limit)
             return JSONResponse(
                 status_code=status.HTTP_200_OK,
@@ -155,8 +165,8 @@ class InwardController:
             forward_to = body.forward_to
             acted_by = x_user_id or "system"
             
-            # Check existence first
-            if inward_id not in inwards_db:
+            inward = InwardService.get_inward_by_id(inward_id)
+            if not inward:
                 return JSONResponse(
                     status_code=status.HTTP_404_NOT_FOUND,
                     content={
@@ -166,7 +176,6 @@ class InwardController:
                     }
                 )
                 
-            inward = inwards_db[inward_id]
             if inward["status"] == "marked_off":
                 return JSONResponse(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -213,7 +222,7 @@ class InwardController:
         x_user_id: Optional[str] = Header(None, alias="X-User-Id")
     ):
         try:
-            if inward_id not in inwards_db:
+            if not InwardService.inward_exists(inward_id):
                 return JSONResponse(
                     status_code=status.HTTP_404_NOT_FOUND,
                     content={
@@ -223,19 +232,10 @@ class InwardController:
                     }
                 )
                 
-            if privacy_level not in ["public", "confidential"]:
-                return JSONResponse(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    content={
-                        "data": None,
-                        "message": "Privacy level must be either 'public' or 'confidential'",
-                        "error": "INVALID_PRIVACY_LEVEL"
-                    }
-                )
+            # Validate privacy_level
+            validate_field("privacy_level", privacy_level)
                 
-            # Save file
             file_ext = os.path.splitext(enclosure.filename)[-1] if enclosure.filename else ""
-            import uuid
             unique_filename = f"enclosure_{uuid.uuid4().hex}{file_ext}"
             filepath = os.path.join(UPLOAD_DIR, unique_filename)
             
@@ -261,6 +261,15 @@ class InwardController:
                     "error": None
                 }
             )
+        except ValidationError as ve:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={
+                    "data": None,
+                    "message": ve.message,
+                    "error": ve.error_code
+                }
+            )
         except Exception as e:
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -283,7 +292,7 @@ class InwardController:
             remarks = body.remarks
             acted_by = x_user_id or "system"
             
-            if inward_id not in inwards_db:
+            if not InwardService.inward_exists(inward_id):
                 return JSONResponse(
                     status_code=status.HTTP_404_NOT_FOUND,
                     content={
