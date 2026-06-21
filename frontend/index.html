@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAARTHI Real-Time API Monitor</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/frontend/index.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-glow"></div>
+                <span class="logo-text">SAARTHI</span>
+                <span class="logo-badge">Live Monitor</span>
+            </div>
+            <div class="connection-status" id="ws-status">
+                <span class="status-dot disconnected"></span>
+                <span class="status-text">Disconnected</span>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="workspace">
+            <!-- Left Pane: API Activity Feed -->
+            <section class="activity-pane">
+                <div class="pane-header">
+                    <h2>API Activity Feed</h2>
+                    <span class="pane-sub">Real-time API requests and statuses</span>
+                </div>
+                <div class="cards-container" id="cards-container">
+                    <!-- Empty State -->
+                    <div class="empty-state" id="empty-state">
+                        <div class="pulse-icon">⚡</div>
+                        <h3>Awaiting API Requests...</h3>
+                        <p>Trigger any endpoint using Swagger UI, curl, or tests to see real-time updates.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Pane: Terminal Log Console -->
+            <section class="terminal-pane">
+                <div class="pane-header">
+                    <h2>Terminal Logs</h2>
+                    <span class="pane-sub">Live standard output stream</span>
+                </div>
+                <div class="terminal-window">
+                    <div class="terminal-titlebar">
+                        <div class="window-buttons">
+                            <span class="dot close"></span>
+                            <span class="dot minimize"></span>
+                            <span class="dot maximize"></span>
+                        </div>
+                        <div class="terminal-title">bash - uvicorn@sarthi:8001</div>
+                    </div>
+                    <div class="terminal-body" id="terminal-body">
+                        <div class="terminal-line system-msg">[SYSTEM] Terminal initialized. Awaiting logs...</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="/frontend/index.js"></script>
+</body>
+</html>

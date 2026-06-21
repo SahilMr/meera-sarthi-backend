@@ -15,22 +15,22 @@ def test_create_soft_copy_inward():
     file = io.BytesIO(file_content)
     
     data = {
-        "department": "DBR",
-        "division": "Legis",
-        "sub_section": "Section A",
-        "case_access_level": "limited",
+        "department": "Department Of Supervision",
+        "division": "DOS-1",
+        "sub_section": "SSM-NBFCs 1",
+        "case_access_level": "Limited Case Access",
         "privacy_level": "confidential",
         "inward_priority_level": "high",
         "year": 2025,
         "inward_subject": "Draft Banking Bill 2025",
         "inward_type": "Legislative Ref",
         "from_which_office": "Central Office",
-        "from_which_department": "Legal",
+        "from_which_department": "Department Of Regulation",
         "inward_date": "2025-06-01",
-        "letter_type": "Official letter",
+        "letter_type": "Central Office(Others)",
         "date_of_receipt": "2025-06-02",
         "estimated_date_of_closure": "2025-12-31",
-        "process_type": "Standard",
+        "process_type": "RTI",
         "letter_language": "English",
         "assigned_to": "officer_bob"
     }
@@ -50,7 +50,7 @@ def test_create_soft_copy_inward():
     
     inward_id = resp_json["data"]["inward_id"]
     # Verify the generated inward_id formatting matches RBI style
-    assert "CO.DBR.LEGIS.no.No.S" in inward_id
+    assert "CO.DEPARTMENTOFSUPERVISION.DOS-1.no.No.S" in inward_id
     assert "\\2025-2026" in inward_id
 
 
@@ -59,22 +59,22 @@ def test_fetch_inward_single_and_list():
     file_content = b"Content"
     file = io.BytesIO(file_content)
     data = {
-        "department": "DBR",
-        "division": "Legis",
-        "sub_section": "Sec 1",
-        "case_access_level": "wider",
+        "department": "Department Of Supervision",
+        "division": "DOS-1",
+        "sub_section": "SSM-NBFCs 1",
+        "case_access_level": "Limited Case Access",
         "privacy_level": "public",
         "inward_priority_level": "medium",
         "year": 2025,
         "inward_subject": "Subject A",
         "inward_type": "Type A",
-        "from_which_office": "Office X",
-        "from_which_department": "Dept Y",
+        "from_which_office": "Central Office",
+        "from_which_department": "Department Of Regulation",
         "inward_date": "2025-06-01",
-        "letter_type": "Ltr",
+        "letter_type": "Central Office(Others)",
         "date_of_receipt": "2025-06-02",
         "estimated_date_of_closure": "2025-06-10",
-        "process_type": "Proc A",
+        "process_type": "RTI",
         "letter_language": "Hindi",
         "assigned_to": "officer_bob"
     }
@@ -125,12 +125,12 @@ def test_forward_inward():
     # 1. Create an inward
     file = io.BytesIO(b"Data")
     data = {
-        "department": "DBR", "division": "Legis", "sub_section": "Sec 1",
-        "case_access_level": "wider", "privacy_level": "public", "inward_priority_level": "medium",
+        "department": "Department Of Supervision", "division": "DOS-1", "sub_section": "SSM-NBFCs 1",
+        "case_access_level": "Wider Case Access", "privacy_level": "public", "inward_priority_level": "medium",
         "year": 2025, "inward_subject": "Subj", "inward_type": "Type",
-        "from_which_office": "Office X", "from_which_department": "Legal",
-        "inward_date": "2025-06-01", "letter_type": "Ltr", "date_of_receipt": "2025-06-02",
-        "estimated_date_of_closure": "2025-06-10", "process_type": "Proc A",
+        "from_which_office": "Central Office", "from_which_department": "Department Of Regulation",
+        "inward_date": "2025-06-01", "letter_type": "Central Office(Others)", "date_of_receipt": "2025-06-02",
+        "estimated_date_of_closure": "2025-06-10", "process_type": "RTI",
         "letter_language": "Hindi", "assigned_to": "officer_bob"
     }
     create_resp = client.post(
@@ -164,12 +164,12 @@ def test_office_note_flow():
     # 1. Create inward
     file = io.BytesIO(b"Data")
     data = {
-        "department": "DBR", "division": "Legis", "sub_section": "Sec 1",
-        "case_access_level": "wider", "privacy_level": "public", "inward_priority_level": "medium",
+        "department": "Department Of Supervision", "division": "DOS-1", "sub_section": "SSM-NBFCs 1",
+        "case_access_level": "Wider Case Access", "privacy_level": "public", "inward_priority_level": "medium",
         "year": 2025, "inward_subject": "Subj", "inward_type": "Type",
-        "from_which_office": "Office X", "from_which_department": "Legal",
-        "inward_date": "2025-06-01", "letter_type": "Ltr", "date_of_receipt": "2025-06-02",
-        "estimated_date_of_closure": "2025-06-10", "process_type": "Proc A",
+        "from_which_office": "Central Office", "from_which_department": "Department Of Regulation",
+        "inward_date": "2025-06-01", "letter_type": "Central Office(Others)", "date_of_receipt": "2025-06-02",
+        "estimated_date_of_closure": "2025-06-10", "process_type": "RTI",
         "letter_language": "Hindi", "assigned_to": "officer_bob"
     }
     create_resp = client.post(
@@ -234,12 +234,12 @@ def test_create_enclosure():
     # 1. Create inward
     file = io.BytesIO(b"Data")
     data = {
-        "department": "DBR", "division": "Legis", "sub_section": "Sec 1",
-        "case_access_level": "wider", "privacy_level": "public", "inward_priority_level": "medium",
+        "department": "Department Of Supervision", "division": "DOS-1", "sub_section": "SSM-NBFCs 1",
+        "case_access_level": "Wider Case Access", "privacy_level": "public", "inward_priority_level": "medium",
         "year": 2025, "inward_subject": "Subj", "inward_type": "Type",
-        "from_which_office": "Office X", "from_which_department": "Legal",
-        "inward_date": "2025-06-01", "letter_type": "Ltr", "date_of_receipt": "2025-06-02",
-        "estimated_date_of_closure": "2025-06-10", "process_type": "Proc A",
+        "from_which_office": "Central Office", "from_which_department": "Department Of Regulation",
+        "inward_date": "2025-06-01", "letter_type": "Central Office(Others)", "date_of_receipt": "2025-06-02",
+        "estimated_date_of_closure": "2025-06-10", "process_type": "RTI",
         "letter_language": "Hindi", "assigned_to": "officer_bob"
     }
     create_resp = client.post(
@@ -284,12 +284,12 @@ def test_mark_off_inward():
     # 1. Create inward
     file = io.BytesIO(b"Data")
     data = {
-        "department": "DBR", "division": "Legis", "sub_section": "Sec 1",
-        "case_access_level": "wider", "privacy_level": "public", "inward_priority_level": "medium",
+        "department": "Department Of Supervision", "division": "DOS-1", "sub_section": "SSM-NBFCs 1",
+        "case_access_level": "Wider Case Access", "privacy_level": "public", "inward_priority_level": "medium",
         "year": 2025, "inward_subject": "Subj", "inward_type": "Type",
-        "from_which_office": "Office X", "from_which_department": "Legal",
-        "inward_date": "2025-06-01", "letter_type": "Ltr", "date_of_receipt": "2025-06-02",
-        "estimated_date_of_closure": "2025-06-10", "process_type": "Proc A",
+        "from_which_office": "Central Office", "from_which_department": "Department Of Regulation",
+        "inward_date": "2025-06-01", "letter_type": "Central Office(Others)", "date_of_receipt": "2025-06-02",
+        "estimated_date_of_closure": "2025-06-10", "process_type": "RTI",
         "letter_language": "Hindi", "assigned_to": "officer_bob"
     }
     create_resp = client.post(
@@ -357,19 +357,19 @@ def test_create_inward_validation_errors():
     file = io.BytesIO(file_content)
     
     data = {
-        "department": "DBR",
-        "division": "Legis",
-        "sub_section": "Section A",
-        "case_access_level": "limited",
+        "department": "Department Of Supervision",
+        "division": "DOS-1",
+        "sub_section": "SSM-NBFCs 1",
+        "case_access_level": "Limited Case Access",
         "privacy_level": "confidential",
         "inward_priority_level": "high",
         "year": 2025,
         "inward_subject": "Draft Banking Bill 2025",
         "inward_type": "Legislative Ref",
         "from_which_office": "Central Office",
-        "from_which_department": "Legal",
+        "from_which_department": "Department Of Regulation",
         "inward_date": "2025-06-01",
-        "letter_type": "Official letter",
+        "letter_type": "Central Office(Others)",
         "date_of_receipt": "2025-06-02",
         "estimated_date_of_closure": "2025-12-31",
         "process_type": "INVALID_PROCESS_VALUE",
@@ -391,7 +391,7 @@ def test_create_inward_validation_errors():
 
     # 2. Try creating with invalid letter_language
     file.seek(0)
-    data["process_type"] = "Standard"
+    data["process_type"] = "RTI"
     data["letter_language"] = "French"
     
     response = client.post(
